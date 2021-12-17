@@ -1,7 +1,7 @@
 <script lang="ts">
   const TIMEOUT = 3000
 
-  const videos = 2
+  const videos = 4
   const videoPlayers = Array(videos).fill(null)
 
   let currentVideoIndex = 0
@@ -17,6 +17,9 @@
   }
 
   function onVideoEnd() {
+    // Do nothing if we've reached the last video.
+    if (currentVideoIndex == videos - 1) return
+
     if (moving) {
       nextVideoIndex++
       fetchNextVideo(nextVideoIndex + 1)
