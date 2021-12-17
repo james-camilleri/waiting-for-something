@@ -19,11 +19,16 @@
   function onVideoEnd() {
     if (moving) {
       nextVideoIndex++
+      fetchNextVideo(nextVideoIndex + 1)
     }
 
     currentVideo = videoPlayers[nextVideoIndex] ?? videoPlayers[videoPlayers.length - 1]
     currentVideoIndex = nextVideoIndex
     currentVideo.play()
+  }
+
+  function fetchNextVideo(i) {
+    fetch(`/${i}.mp4`)
   }
 
   function onMove() {
@@ -33,11 +38,10 @@
     timer = setTimeout(() => {
       moving = false
       nextVideoIndex = 0
-      console.log('reset')
     }, TIMEOUT)
   }
 
-  $: console.log(currentVideoIndex)
+  fetchNextVideo(1)
 </script>
 
 <svelte:body on:mousemove={onMove} on:touchmove={onMove} />
