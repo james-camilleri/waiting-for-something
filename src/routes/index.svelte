@@ -1,41 +1,56 @@
 <script lang="ts">
-  const TIMEOUT = 3000
+  import ProgressBar from '$lib/ProgressBar.svelte'
+  import Video from '$lib/Video.svelte'
 
-  const videos = 4
-  const videoPlayers = Array(videos).fill(null)
+  const TIMEOUT = 500
+  const TOTAL_VIDEOS = 4
+
+  interface Video {
+    videoElement: HTMLVideoElement
+    percentComplete: number
+  }
+
+  let videos: Video[] = Array(TOTAL_VIDEOS).fill(null)
+  videos = videos.map(() => ({
+    videoElement: null,
+    percentComplete: 0
+  }))
 
   let currentVideoIndex = 0
   let nextVideoIndex = 0
-  let currentVideo: HTMLVideoElement | null = null
+  let currentVideo: Video | null = null
   let started = false
   let moving = false
   let timer
 
   function start() {
-    videoPlayers[0].play()
+    videos[0].videoElement.play()
     started = true
   }
 
   function onVideoEnd() {
     // Do nothing if we've reached the last video.
-    if (currentVideoIndex == videos - 1) return
+    if (currentVideoIndex == TOTAL_VIDEOS - 1) return
 
     if (moving) {
       nextVideoIndex++
       fetchNextVideo(nextVideoIndex + 1)
+    } else {
+      // Video has been reset, clear all progress bars.
+      videos.forEach((video) => (video.percentComplete = 0))
     }
 
-    currentVideo = videoPlayers[nextVideoIndex] ?? videoPlayers[videoPlayers.length - 1]
+    currentVideo = videos[nextVideoIndex] ?? videos[videos.length - 1]
     currentVideoIndex = nextVideoIndex
-    currentVideo.play()
+    currentVideo.videoElement.play()
   }
 
   function fetchNextVideo(i) {
-    fetch(`/${i}.mp4`)
+    // fetch(`/${i}.mp4`)
   }
 
   function onMove() {
-    moving = true
+    moving = started && true
     clearTimeout(timer)
 
     timer = setTimeout(() => {
@@ -47,18 +62,28 @@
   fetchNextVideo(1)
 </script>
 
-<svelte:body on:mousemove={onMove} on:touchmove={onMove} />
+<svelte:body on:mousemove={onMove} on:touchmove={onMove} on:click={onMove} on:scroll={onMove} />
 
 <div class="page-wrapper">
+  <div class="progress-bars">
+    {#each videos as { percentComplete }, i}
+      <ProgressBar percent={percentComplete} nextSection={i === nextVideoIndex + 1} {moving} />
+    {/each}
+  </div>
   <div class="video-wrapper">
-    {#each videoPlayers as _, i}
-      <video bind:this={videoPlayers[i]} class:show={i == currentVideoIndex} on:ended={onVideoEnd}>
-        <source src={`/${i}.mp4`} type="video/mp4" />
-      </video>
+    {#each videos as video, i}
+      <Video
+        src={`/${i}.mp4`}
+        show={i == currentVideoIndex}
+        bind:percentComplete={video.percentComplete}
+        bind:videoElement={video.videoElement}
+        {onVideoEnd}
+      />
     {/each}
   </div>
   {#if !started}
     <button on:click={start}> start </button>
+    <p>(fidget with your mouse to advance the soundscape)</p>
   {/if}
 </div>
 
@@ -81,17 +106,14 @@
     background: black;
   }
 
+  .progress-bars {
+    display: flex;
+  }
+
   .video-wrapper {
     position: relative;
     aspect-ratio: 16/9;
   }
-
-  video {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-  }
-
   button {
     position: fixed;
     top: 0;
@@ -109,7 +131,9 @@
     cursor: pointer;
   }
 
-  .show {
-    z-index: 1;
+  p {
+    font-family: monospace;
+    color: white;
+    text-align: center;
   }
 </style>
