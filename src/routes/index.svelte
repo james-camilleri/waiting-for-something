@@ -46,7 +46,7 @@
   }
 
   function fetchNextVideo(i) {
-    // fetch(`/${i}.mp4`)
+    fetch(`/${i}.mp4`)
   }
 
   function onMove() {
